@@ -1,0 +1,53 @@
+name: Check and Lint
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check-and-lint:
+    name: Check and Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Nightly Toolchain
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy, rustfmt
+
+      - name: Check
+        run: cargo +nightly check --locked
+
+      - name: Test
+        run: cargo +nightly test --locked
+
+      - name: Format
+        run: cargo +nightly fmt --check
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+
+      - name: Install Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install Sidex
+        uses: jdx/mise-action@v4
+        with:
+          install_args: "github:silitics/sidex"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Frontend
+        working-directory: frontend
+        run: pnpm run build
