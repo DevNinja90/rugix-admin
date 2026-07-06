@@ -1,8 +1,10 @@
 import { AlertTriangle, CheckCircle2, CircleSlash, Network, ShieldCheck } from "lucide-react";
+import type { ReactNode } from "react";
 import type { api } from "../../generated";
 import { Badge } from "../../shared/components/Badge";
 import { EmptyState } from "../../shared/components/EmptyState";
 import { Surface } from "../../shared/components/Surface";
+import { classes } from "../../shared/lib/classes";
 
 export function ComponentsPage({ report }: { report?: api.ComponentsCheckResponse }) {
   const components = [...(report?.components ?? [])].sort((left, right) =>
@@ -50,8 +52,16 @@ function SummaryCell({ label, value }: { label: string; value: string }) {
   return (
     <div className="px-4 py-3">
       <div className="text-xs font-semibold uppercase tracking-wide text-foreground-subtle">{label}</div>
-      <div className="mt-1 truncate text-sm font-medium">{value}</div>
+      <div className="mt-1 truncate font-mono text-sm font-medium tabular-nums">{value}</div>
     </div>
+  );
+}
+
+function CodeText({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <code className={classes("rounded bg-elevation-2 px-1 py-0.5 font-mono text-[0.92em] text-inherit", className)}>
+      {children}
+    </code>
   );
 }
 
@@ -89,11 +99,11 @@ function ComponentList({ components }: { components: api.LoadedComponent[] }) {
             <summary className="grid cursor-pointer gap-3 px-4 py-3 transition hover:bg-elevation-2 md:grid-cols-[minmax(0,1fr)_auto]">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="break-words text-sm font-semibold text-foreground">{component.id}</span>
-                  {component.version && <Badge color="bg-elevation-2 text-foreground-muted ring-divider">{component.version}</Badge>}
+                  <span className="break-words font-mono text-sm font-semibold text-foreground">{component.id}</span>
+                  {component.version && <Badge color="bg-elevation-2 text-foreground-muted ring-divider" className="font-mono">{component.version}</Badge>}
                   <SourceBadge source={source} />
                 </div>
-                <div className="mt-1 break-all text-xs text-foreground-muted">{source.path}</div>
+                <div className="mt-1 break-all font-mono text-xs text-foreground-muted">{source.path}</div>
               </div>
               <div className="flex flex-wrap items-center gap-2 md:justify-end">
                 <CountBadge label="provides" count={component.provides.length} />
@@ -126,9 +136,9 @@ function RootList({ roots }: { roots: api.ComponentRoot[] }) {
         <div key={`${root.kind}:${root.path}`} className="space-y-2 px-4 py-3">
           <div className="flex flex-wrap items-center gap-2">
             <Badge color={sourceColor(root.kind)}>{sourceKindLabel(root.kind)}</Badge>
-            {root.app && <Badge color="bg-elevation-2 text-foreground-muted ring-divider">{root.app}</Badge>}
+            {root.app && <Badge color="bg-elevation-2 text-foreground-muted ring-divider" className="font-mono">{root.app}</Badge>}
             {root.generation !== undefined && (
-              <Badge color="bg-elevation-2 text-foreground-muted ring-divider">generation {String(root.generation)}</Badge>
+              <Badge color="bg-elevation-2 text-foreground-muted ring-divider">generation <CodeText>{String(root.generation)}</CodeText></Badge>
             )}
           </div>
           <div className="break-all font-mono text-xs text-foreground-muted">{root.path}</div>
@@ -187,8 +197,8 @@ function CapabilityGroup({
               <div className="break-words font-mono text-xs text-foreground">{item.id}</div>
               {(itemDetail(item).version || itemDetail(item).value) && (
                 <div className="mt-1 flex flex-wrap gap-1.5 text-xs text-foreground-muted">
-                  {itemDetail(item).version && <span className="rounded bg-elevation-2 px-1.5 py-0.5">version {itemDetail(item).version}</span>}
-                  {itemDetail(item).value && <span className="rounded bg-elevation-2 px-1.5 py-0.5">value {itemDetail(item).value}</span>}
+                  {itemDetail(item).version && <span className="rounded bg-elevation-2 px-1.5 py-0.5">version <CodeText>{itemDetail(item).version}</CodeText></span>}
+                  {itemDetail(item).value && <span className="rounded bg-elevation-2 px-1.5 py-0.5">value <CodeText>{itemDetail(item).value}</CodeText></span>}
                 </div>
               )}
             </div>
@@ -217,40 +227,91 @@ function problemLabel(kind: api.ComponentProblem["kind"]) {
 function problemTitle(problem: api.ComponentProblem) {
   switch (problem.kind) {
     case "DuplicateComponent":
-      return `Duplicate component ${problem.id}`;
+      return <>Duplicate component <CodeText>{problem.id}</CodeText></>;
     case "DuplicateClaim":
-      return `Duplicate claim ${problem.id}`;
+      return <>Duplicate claim <CodeText>{problem.id}</CodeText></>;
     case "UnsatisfiedRequirement":
-      return `${problem.component.id} requires ${selectorText(problem.selector)}`;
+      return <><CodeText>{problem.component.id}</CodeText> requires <CodeText>{selectorText(problem.selector)}</CodeText></>;
     case "Conflict":
-      return `${problem.component.id} conflicts with ${problem.provider.id}`;
+      return <><CodeText>{problem.component.id}</CodeText> conflicts with <CodeText>{problem.provider.id}</CodeText></>;
   }
 }
 
 function problemDescription(problem: api.ComponentProblem) {
   switch (problem.kind) {
     case "DuplicateComponent":
-      return `Declared by ${problem.sources.map(sourceSummary).join(", ")}.`;
+      return <>Declared by {joinNodes(problem.sources.map((source, index) => <SourceSummary key={`${source.kind}:${source.path}:${index}`} source={source} />))}.</>;
     case "DuplicateClaim":
-      return `Claimed by ${problem.components.map(componentRefSummary).join(", ")}.`;
+      return <>Claimed by {joinNodes(problem.components.map((component, index) => <ComponentRefSummary key={`${component.id}:${index}`} component={component} />))}.</>;
     case "UnsatisfiedRequirement":
-      return `No loaded component provides ${selectorText(problem.selector)}.`;
+      return <>No loaded component provides <CodeText>{selectorText(problem.selector)}</CodeText>.</>;
     case "Conflict":
-      return `${problem.provider.id} provides ${capabilityText(problem.capability)}, matching ${selectorText(problem.selector)}.`;
+      return <><CodeText>{problem.provider.id}</CodeText> provides <CodeText>{capabilityText(problem.capability)}</CodeText>, matching <CodeText>{selectorText(problem.selector)}</CodeText>.</>;
   }
 }
 
-function componentRefSummary(component: api.ComponentRef) {
+function joinNodes(nodes: ReactNode[]) {
+  return nodes.flatMap((node, index) => (index === 0 ? [node] : [", ", node]));
+}
+
+function ComponentRefSummary({ component }: { component: api.ComponentRef }) {
   if (!component.source) {
-    return component.id;
+    return <CodeText>{component.id}</CodeText>;
   }
-  return `${component.id} (${sourceSummary(component.source)})`;
+  if (component.source.kind === "App") {
+    return (
+      <>
+        <CodeText>{component.id}</CodeText>
+        {component.source.generation !== undefined && (
+          <>
+            {" "}(generation <CodeText>{String(component.source.generation)}</CodeText>)
+          </>
+        )}
+      </>
+    );
+  }
+  return (
+    <>
+      <CodeText>{component.id}</CodeText> (<SourceSummary source={component.source} />)
+    </>
+  );
 }
 
-function sourceSummary(source: api.ComponentSource) {
-  const app = source.app ? `, app ${source.app}` : "";
-  const generation = source.generation !== undefined ? `, generation ${String(source.generation)}` : "";
-  return `${sourceKindLabel(source.kind)} ${source.path}${app}${generation}`;
+function SourceSummary({ source }: { source: api.ComponentSource }) {
+  if (source.kind === "App" && source.app) {
+    return (
+      <>
+        app <CodeText>{source.app}</CodeText>
+        {source.generation !== undefined && (
+          <>
+            , generation <CodeText>{String(source.generation)}</CodeText>
+          </>
+        )}
+      </>
+    );
+  }
+  if (source.app || source.generation !== undefined) {
+    return (
+      <>
+        {sourceKindLabel(source.kind)}
+        {source.app && (
+          <>
+            {" "}app <CodeText>{source.app}</CodeText>
+          </>
+        )}
+        {source.generation !== undefined && (
+          <>
+            , generation <CodeText>{String(source.generation)}</CodeText>
+          </>
+        )}
+      </>
+    );
+  }
+  return (
+    <>
+      {sourceKindLabel(source.kind)} component
+    </>
+  );
 }
 
 function capabilityText(capability: api.Capability) {
