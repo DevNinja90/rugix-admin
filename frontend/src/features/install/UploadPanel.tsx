@@ -12,6 +12,8 @@ export function UploadPanel({
   icon,
   system,
   allowUrl,
+  urlLabel = "Update URL",
+  urlPlaceholder = "https://example.com/update.rugixb",
   onUpload,
   onUrlInstall,
 }: {
@@ -20,6 +22,8 @@ export function UploadPanel({
   icon: ReactNode;
   system?: boolean;
   allowUrl?: boolean;
+  urlLabel?: string;
+  urlPlaceholder?: string;
   onUpload: (file: File, options: InstallOptions) => void;
   onUrlInstall?: (url: string, options: InstallOptions) => void;
 }) {
@@ -77,14 +81,14 @@ export function UploadPanel({
           </label>
         ) : (
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-foreground-muted">Update URL</span>
+            <span className="mb-1 block text-sm font-medium text-foreground-muted">{urlLabel}</span>
             <span className="flex items-center gap-2">
               <input
                 className={fieldClass}
                 type="url"
                 value={url}
                 onChange={(event) => setUrl(event.target.value)}
-                placeholder="https://example.com/update.rugixb"
+                placeholder={urlPlaceholder}
               />
             </span>
           </label>

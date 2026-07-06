@@ -100,6 +100,14 @@ export function uploadAppBundle(
   return uploadBundle(`/api/apps/install/${encodeURIComponent(jobId)}${installQuery(options)}`, "bundle", file, onProgress);
 }
 
+export function installAppBundleFromUrl(jobId: string, url: string, options: InstallOptions) {
+  return request<api.JobResponse>(`/api/apps/install/${encodeURIComponent(jobId)}/url${installQuery(options)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url }),
+  }).then((response) => response.job);
+}
+
 export type InstallOptions = {
   bundleHash?: string;
   rootCert?: string;

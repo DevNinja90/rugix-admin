@@ -15,6 +15,7 @@ export function AppsPage({
   info,
   onSelect,
   onUpload,
+  onUrlInstall,
   onAction,
 }: {
   apps: api.AppSummary[];
@@ -22,6 +23,7 @@ export function AppsPage({
   info?: api.AppInfoResponse;
   onSelect: (app: string) => void;
   onUpload: (file: File, options: InstallOptions) => void;
+  onUrlInstall: (url: string, options: InstallOptions) => void;
   onAction: (action: string, query?: Record<string, string | number | undefined>) => void;
 }) {
   const orderedGenerations = [...(info?.generations ?? [])].sort(
@@ -56,7 +58,16 @@ export function AppsPage({
           activeGeneration={activeGeneration}
           onAction={onAction}
         />
-        <UploadPanel title="Install App Bundle" fileLabel="App bundle" icon={<PackagePlus size={18} />} onUpload={onUpload} />
+        <UploadPanel
+          title="Install App Bundle"
+          fileLabel="App bundle"
+          icon={<PackagePlus size={18} />}
+          allowUrl
+          urlLabel="Bundle URL"
+          urlPlaceholder="https://example.com/app.rugixb"
+          onUpload={onUpload}
+          onUrlInstall={onUrlInstall}
+        />
       </div>
     </div>
   );

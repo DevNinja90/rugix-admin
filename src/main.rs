@@ -80,6 +80,10 @@ async fn main() {
             "/api/apps/install/:job_id",
             post(handlers::upload_app_bundle),
         )
+        .route(
+            "/api/apps/install/:job_id/url",
+            post(handlers::install_app_bundle_from_url),
+        )
         .route("/api/apps/:app", get(handlers::app_info))
         .route("/api/apps/:app/actions/:action", post(handlers::app_action))
         .route("/api/jobs", get(handlers::list_jobs))

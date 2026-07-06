@@ -213,6 +213,37 @@ pub(crate) async fn upload_app_bundle(
     Ok(Json(api::JobResponse::new(state.jobs.get(&job_id).await?)))
 }
 
+pub(crate) async fn install_app_bundle_from_url(
+    State(state): State<ServerState>,
+    Path(job_id): Path<String>,
+    Query(query): Query<AppInstallQuery>,
+    Json(request): Json<AppBundleUrlRequest>,
+) -> ApiResult<Json<api::JobResponse>> {
+    let url = request.url.trim();
+    if !(url.starts_with("http://") || url.starts_with("https://")) {
+        return Err(ApiError::bad_request(
+            "invalid-url",
+            "app bundle URL must start with http:// or https://",
+        ));
+    }
+
+    let mut args = vec!["apps".to_owned(), "install".to_owned()];
+    apply_install_options(&mut args, &query.common());
+    args.push(url.to_owned());
+
+    let job = state
+        .jobs
+        .create(
+            Some(job_id.clone()),
+            "Install app bundle".to_owned(),
+            "app-install".to_owned(),
+            None,
+        )
+        .await?;
+    spawn_command_job(state.jobs.clone(), job_id, args);
+    Ok(Json(api::JobResponse::new(job)))
+}
+
 pub(crate) async fn app_info(Path(app): Path<String>) -> ApiResult<Json<api::AppInfoResponse>> {
     let raw = run_json_command(&["apps", "info", &app]).await?;
     let info = serde_json::from_value(raw).map_err(ApiError::invalid_ctrl_output)?;
@@ -343,6 +374,12 @@ pub(crate) struct SystemInstallQuery {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct SystemUpdateUrlRequest {
+    url: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct AppBundleUrlRequest {
     url: String,
 }
 

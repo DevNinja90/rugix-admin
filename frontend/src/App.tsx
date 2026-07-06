@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AdminApi,
   installSystemUpdateFromUrl,
+  installAppBundleFromUrl,
   type InstallOptions,
   subscribeJob,
   uploadAppBundle,
@@ -164,6 +165,18 @@ export function App() {
     }
   }
 
+  async function installAppBundleUrl(url: string, options: InstallOptions) {
+    const jobId = createJobId();
+    setLogs((current) => ({ ...current, [jobId]: { lines: [] } }));
+    watchJob(jobId);
+    try {
+      const job = await installAppBundleFromUrl(jobId, url, options);
+      setLogs((current) => ({ ...current, [jobId]: { ...(current[jobId] ?? { lines: [] }), job } }));
+    } catch (error) {
+      setError(errorMessage(error));
+    }
+  }
+
   return (
     <div className="mesh-gradient min-h-screen bg-elevation-0 text-foreground">
       <TopNav
@@ -208,6 +221,7 @@ export function App() {
             onSelect={setSelectedApp}
             onUpload={(file, options) => void upload("app", file, options)}
             onAction={(action, query) => void runAppAction(action, query)}
+            onUrlInstall={(url, options) => void installAppBundleUrl(url, options)}
           />
         )}
         {tab === "jobs" && (
