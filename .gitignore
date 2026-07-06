@@ -12,6 +12,8 @@
 /frontend/tests/.venv
 /frontend/tests/test-results
 
+/marketing/screenshots
+
 .devenv*
 devenv.local.nix
 devenv.local.yaml

@@ -1,4 +1,5 @@
 import { Boxes, ExternalLink, HardDriveUpload, Moon, Network, RefreshCw, Server, Sun } from "lucide-react";
+import rugixLogo from "../../assets/rugix-logo.svg";
 import type { jobs } from "../../generated";
 import { iconButtonClass } from "../../shared/styles";
 import type { Tab, Theme } from "../../types";
@@ -23,13 +24,8 @@ export function TopNav({
     <header className="sticky top-0 z-20 border-b border-divider bg-elevation-0/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-[1520px] flex-wrap items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-md bg-brand-elevation-2 text-brand-primary shadow-elevation-plus-1">
-            <Boxes size={19} />
-          </div>
-          <div className="min-w-0">
-            <div className="truncate font-display text-sm font-semibold">Rugix Admin</div>
-            <div className="truncate text-xs text-foreground-subtle">localhost</div>
-          </div>
+          <img src={rugixLogo} alt="" className="size-9 shrink-0" />
+          <div className="truncate font-display text-base font-semibold">Rugix Admin</div>
         </div>
 
         <nav className="order-3 flex w-full rounded-lg border border-divider bg-elevation-1 p-1 sm:order-none sm:ml-4 sm:w-auto">

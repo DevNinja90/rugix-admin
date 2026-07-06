@@ -23,6 +23,8 @@ import { applyEvent, isTerminal, updateBrowserProgress } from "./shared/lib/jobE
 import { initialTheme } from "./shared/lib/theme";
 import type { JobLog, Tab, Theme } from "./types";
 
+const isMarketingBuild = import.meta.env.VITE_RUGIX_ADMIN_MARKETING === "true";
+
 export function App() {
   const [tab, setTab] = useState<Tab>("system");
   const [system, setSystem] = useState<api.SystemInfoResponse>();
@@ -176,7 +178,7 @@ export function App() {
       />
 
       <main className="mx-auto max-w-[1520px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
-        <DemoDisclaimer />
+        {!isMarketingBuild && <DemoDisclaimer />}
         <PageTitle tab={tab} />
         {error && <ErrorBanner message={error} />}
         {activeJobId && (
