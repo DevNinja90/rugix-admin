@@ -98,6 +98,8 @@ jobs:
     needs:
       - build_binaries_linux
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
       - name: Download Binaries
         uses: actions/download-artifact@v8
         with:
