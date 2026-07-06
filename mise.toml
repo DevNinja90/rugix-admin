@@ -1,0 +1,2 @@
+[tools]
+"github:silitics/sidex" = { version = "0.2.6", exe = "sidex" }
