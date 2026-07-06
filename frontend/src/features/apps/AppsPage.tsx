@@ -37,8 +37,8 @@ export function AppsPage({
         </Surface>
 
         <Surface
-          title={selected ? `Generations for ${selected.name}` : "Generations"}
-          action={info && <Badge color="bg-elevation-2 text-foreground-muted ring-divider">{info.generations.length} total</Badge>}
+          title={selected ? <>Generations for <span className="font-mono">{selected.name}</span></> : "Generations"}
+          action={info && <Badge color="bg-elevation-2 text-foreground-muted ring-divider" className="font-mono tabular-nums">{info.generations.length} total</Badge>}
           bodyClassName="p-0"
         >
           {info ? (

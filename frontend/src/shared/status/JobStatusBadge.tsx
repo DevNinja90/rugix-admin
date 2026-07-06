@@ -10,5 +10,5 @@ export function JobStatusBadge({ status }: { status: jobs.JobStatus }) {
         : status.status === "running"
           ? "bg-info-surface text-info ring-info/30"
           : "bg-elevation-2 text-foreground-muted ring-divider";
-  return <Badge color={color}>{status.status}</Badge>;
+  return <Badge color={color} className="font-mono">{status.status}</Badge>;
 }

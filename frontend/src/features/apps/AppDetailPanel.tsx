@@ -20,28 +20,33 @@ export function AppDetailPanel({
   activeGeneration?: api.AppGeneration;
   onAction: (action: string, query?: Record<string, string | number | undefined>) => void;
 }) {
+  const isWorkloadRunning = info?.status.state === "running" || info?.status.state === "unhealthy";
+
   return (
     <Surface
-      title={app?.name ?? "App"}
+      title={app ? <span className="font-mono">{app.name}</span> : "App"}
       icon={<Boxes size={18} />}
       action={info && <AppStatusBadge status={info.status} />}
     >
       {info ? (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <MiniMetric label="Workload" value={info.status.state} />
-            <MiniMetric label="State" value={info.state.state} />
-            <MiniMetric label="Active Generation" value={generationLabel(activeGeneration?.number ?? app?.generation)} />
-            <MiniMetric label="Generations" value={String(info.generations.length)} />
+            <MiniMetric label="Workload" value={info.status.state} valueClassName="font-mono" />
+            <MiniMetric label="State" value={info.state.state} valueClassName="font-mono" />
+            <MiniMetric label="Active Generation" value={generationLabel(activeGeneration?.number ?? app?.generation)} valueClassName="font-mono" />
+            <MiniMetric label="Generations" value={String(info.generations.length)} valueClassName="font-mono tabular-nums" />
           </div>
 
           <ActionGroup title="Workload">
-            <button className={buttonClass} onClick={() => onAction("start")}>
-              <Play size={16} /> Start
-            </button>
-            <button className={buttonClass} onClick={() => onAction("stop")}>
-              <Square size={16} /> Stop
-            </button>
+            {isWorkloadRunning ? (
+              <button className={buttonClass} onClick={() => onAction("stop")}>
+                <Square size={16} /> Stop
+              </button>
+            ) : (
+              <button className={buttonClass} onClick={() => onAction("start")}>
+                <Play size={16} /> Start
+              </button>
+            )}
           </ActionGroup>
 
           <ActionGroup title="Generation">

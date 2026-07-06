@@ -23,10 +23,9 @@ export function SystemPage({
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_420px]">
       <div className="space-y-5">
         <Surface className="p-0">
-          <div className="grid divide-y divide-divider sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-            <StatusCell label="Active" value={system?.activeBootGroup ?? "unknown"} />
-            <StatusCell label="Default" value={system?.defaultBootGroup ?? "unknown"} />
-            <StatusCell label="State" value={system?.stateStatus ?? "unknown"} />
+          <div className="grid divide-y divide-divider sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+            <StatusCell label="Current" value={bootGroupLabel(system?.activeBootGroup)} />
+            <StatusCell label="Default" value={bootGroupLabel(system?.defaultBootGroup)} />
           </div>
         </Surface>
 
@@ -56,4 +55,8 @@ export function SystemPage({
       </Surface>
     </div>
   );
+}
+
+function bootGroupLabel(group?: string) {
+  return group?.toUpperCase() ?? "unknown";
 }

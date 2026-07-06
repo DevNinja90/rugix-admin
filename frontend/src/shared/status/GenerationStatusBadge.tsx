@@ -8,5 +8,5 @@ export function GenerationStatusBadge({ generation }: { generation: api.AppGener
     : generation.complete
       ? "bg-success-surface text-success ring-success/30"
       : "bg-warning-surface text-warning ring-warning/30";
-  return <Badge color={color}>{label}</Badge>;
+  return <Badge color={color} className="font-mono">{label}</Badge>;
 }
