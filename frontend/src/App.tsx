@@ -113,6 +113,19 @@ export function App() {
     watchJob(jobId);
   }
 
+  function mergeJobSnapshot(current: Record<string, JobLog>, job: jobs.Job) {
+    const previous = current[job.id] ?? { lines: [] };
+    const previousUpdatedAt = previous.job ? Date.parse(previous.job.updatedAt) : Number.NEGATIVE_INFINITY;
+    const nextUpdatedAt = Date.parse(job.updatedAt);
+    return {
+      ...current,
+      [job.id]: {
+        ...previous,
+        job: nextUpdatedAt >= previousUpdatedAt ? job : previous.job,
+      },
+    };
+  }
+
   async function runSystemAction(action: string) {
     try {
       const response = await AdminApi.systemAction(action);
@@ -147,7 +160,7 @@ export function App() {
           : await uploadAppBundle(jobId, file, options, (sent, total) =>
               setLogs((current) => updateBrowserProgress(current, jobId, sent, total)),
             );
-      setLogs((current) => ({ ...current, [jobId]: { ...(current[jobId] ?? { lines: [] }), job } }));
+      setLogs((current) => mergeJobSnapshot(current, job));
     } catch (error) {
       setError(errorMessage(error));
     }
@@ -159,7 +172,7 @@ export function App() {
     watchJob(jobId);
     try {
       const job = await installSystemUpdateFromUrl(jobId, url, options);
-      setLogs((current) => ({ ...current, [jobId]: { ...(current[jobId] ?? { lines: [] }), job } }));
+      setLogs((current) => mergeJobSnapshot(current, job));
     } catch (error) {
       setError(errorMessage(error));
     }
@@ -171,7 +184,7 @@ export function App() {
     watchJob(jobId);
     try {
       const job = await installAppBundleFromUrl(jobId, url, options);
-      setLogs((current) => ({ ...current, [jobId]: { ...(current[jobId] ?? { lines: [] }), job } }));
+      setLogs((current) => mergeJobSnapshot(current, job));
     } catch (error) {
       setError(errorMessage(error));
     }

@@ -115,6 +115,13 @@ def main() -> int:
         write_json({"event": "UpdateProgress", "progress": 100.0})
         return 0
 
+    if is_url_app_install_command(args):
+        print("fake app bundle download started")
+        write_json({"event": "UpdateProgress", "progress": 43.0})
+        print("fake app bundle install running")
+        write_json({"event": "UpdateProgress", "progress": 100.0})
+        return 0
+
     if is_upload_command(args):
         early_exit = state / "early-exit-next-upload"
         if early_exit.exists():
@@ -187,6 +194,10 @@ def app_info(name: str) -> dict:
 
 def is_url_update_command(args: list[str]) -> bool:
     return bool(args and args[0:2] == ["update", "install"] and args[-1].startswith(("http://", "https://")))
+
+
+def is_url_app_install_command(args: list[str]) -> bool:
+    return bool(args and args[0:2] == ["apps", "install"] and args[-1].startswith(("http://", "https://")))
 
 
 def is_upload_command(args: list[str]) -> bool:

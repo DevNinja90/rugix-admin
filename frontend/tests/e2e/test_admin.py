@@ -154,7 +154,7 @@ def test_failed_app_upload_returns_job_instead_of_network_error(
 
     page.get_by_role("button", name="Install").click()
 
-    expect(page.get_by_text("Install app bundle")).to_be_visible()
+    expect(page.get_by_text("Install app bundle", exact=True)).to_be_visible()
     expect(page.get_by_text("failed").first).to_be_visible(timeout=15_000)
     page.wait_for_timeout(250)
     expect(page.get_by_text("upload failed")).not_to_be_visible()
@@ -175,3 +175,42 @@ def test_failed_app_upload_returns_job_instead_of_network_error(
     ]
 
     page.screenshot(path=str(screenshot_path(request, "app-upload-failed")), full_page=True)
+
+
+def test_installs_app_bundle_from_url_through_browser_and_fake_rugix_ctrl(
+    page: Page,
+    admin_server: AdminServer,
+    request: pytest.FixtureRequest,
+) -> None:
+    page.goto(admin_server.frontend_url)
+    page.get_by_role("button", name="Apps").click()
+    expect(page.get_by_text("Install App Bundle")).to_be_visible()
+    page.get_by_role("button", name="URL").click()
+    page.get_by_label("Bundle URL").fill("https://updates.example.com/app.rugixb")
+    page.get_by_text("Advanced").click()
+    page.get_by_label("Bundle hash").fill("url-app-hash")
+    page.get_by_label("Root certificate").fill("/etc/rugix/app-root.pem")
+    page.get_by_label("Skip verification").check()
+    page.get_by_label("Allow missing index").check()
+
+    page.get_by_role("button", name="Install").click()
+
+    expect(page.get_by_text("Install app bundle", exact=True)).to_be_visible()
+    expect(page.get_by_text("succeeded").first).to_be_visible()
+    expect(page.get_by_text("100%").first).to_be_visible()
+    expect(page.get_by_text("fake app bundle install running")).to_be_visible()
+
+    expected_args = [
+        "apps",
+        "install",
+        "--insecure-skip-bundle-verification",
+        "--insecure-allow-missing-block-index",
+        "--root-cert",
+        "/etc/rugix/app-root.pem",
+        "--bundle-hash",
+        "url-app-hash",
+        "https://updates.example.com/app.rugixb",
+    ]
+    wait_for_command(admin_server.fake_dir, expected_args)
+
+    page.screenshot(path=str(screenshot_path(request, "app-url")), full_page=True)
