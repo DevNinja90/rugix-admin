@@ -31,7 +31,7 @@ class AdminServer:
 def browser_context_args(browser_context_args: dict) -> dict:
     return {
         **browser_context_args,
-        "viewport": {"width": 1400, "height": 787},
+        "viewport": {"width": 1280, "height": 800},
         "device_scale_factor": 2,
     }
 
@@ -111,7 +111,11 @@ def admin_server(tmp_path_factory: pytest.TempPathFactory) -> Iterator[AdminServ
                 "--strictPort",
             ],
             cwd=FRONTEND_ROOT,
-            env={**env, "RUGIX_ADMIN_API_TARGET": admin_url},
+            env={
+                **env,
+                "RUGIX_ADMIN_API_TARGET": admin_url,
+                "VITE_RUGIX_ADMIN_MARKETING": "true",
+            },
             stdout=vite_log,
             stderr=subprocess.STDOUT,
         )

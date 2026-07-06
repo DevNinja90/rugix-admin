@@ -10,6 +10,13 @@ from conftest import AdminServer, read_jsonl, screenshot_path, wait_for_command,
 
 pytestmark = pytest.mark.e2e
 
+TAB_SWITCH_SETTLE_MS = 150
+
+
+def switch_tab(page: Page, name: str) -> None:
+    page.get_by_role("button", name=name).click()
+    page.wait_for_timeout(TAB_SWITCH_SETTLE_MS)
+
 
 def test_renders_all_screens_and_saves_screenshots(
     page: Page, admin_server: AdminServer, request: pytest.FixtureRequest
@@ -17,28 +24,45 @@ def test_renders_all_screens_and_saves_screenshots(
     page.goto(admin_server.frontend_url)
 
     expect(page.get_by_text("Rugix Admin")).to_be_visible()
-    expect(page.get_by_text("Active")).to_be_visible()
+    expect(page.get_by_text("Current")).to_be_visible()
     expect(page.get_by_text("Default")).to_be_visible()
-    expect(page.get_by_text("State")).to_be_visible()
-    page.screenshot(path=str(screenshot_path(request, "system")), full_page=True)
+    page.screenshot(path=str(screenshot_path(request, "system")))
 
-    page.get_by_role("button", name="Components").click()
+    switch_tab(page, "Components")
     expect(page.get_by_text("Loaded Components")).to_be_visible()
     expect(page.get_by_text("Scanned Roots")).to_be_visible()
-    expect(page.get_by_text("com.example.core")).to_be_visible()
-    page.screenshot(path=str(screenshot_path(request, "components")), full_page=True)
+    expect(page.get_by_text("app.custom-hmi")).to_be_visible()
+    page.screenshot(path=str(screenshot_path(request, "components")))
 
-    page.get_by_role("button", name="Apps").click()
+    switch_tab(page, "Apps")
     expect(page.get_by_text("Installed Apps")).to_be_visible()
-    expect(page.get_by_text("telemetry")).to_be_visible()
-    page.get_by_role("button", name="telemetry").click()
-    expect(page.get_by_text("Generations for telemetry")).to_be_visible()
-    page.screenshot(path=str(screenshot_path(request, "apps")), full_page=True)
+    custom_hmi = page.get_by_role("button", name="custom-hmi running #5")
+    expect(custom_hmi).to_be_visible()
+    custom_hmi.click()
+    expect(page.get_by_text("Generations for custom-hmi")).to_be_visible()
+    page.screenshot(path=str(screenshot_path(request, "apps")))
 
-    page.get_by_role("button", name="Jobs").click()
+    switch_tab(page, "Jobs")
     expect(page.get_by_text("Recent Jobs")).to_be_visible()
     expect(page.get_by_text("Job Log")).to_be_visible()
-    page.screenshot(path=str(screenshot_path(request, "jobs")), full_page=True)
+    page.screenshot(path=str(screenshot_path(request, "jobs")))
+
+
+def test_renders_component_conflicts_screenshot(
+    page: Page, admin_server: AdminServer, request: pytest.FixtureRequest
+) -> None:
+    marker = admin_server.fake_dir / "component-conflicts"
+    marker.write_text("1")
+    try:
+        page.goto(admin_server.frontend_url)
+        switch_tab(page, "Components")
+        expect(page.get_by_text("inconsistent")).to_be_visible()
+        expect(page.get_by_text("app.maintenance-panel requires hardware.can.interface = can1")).to_be_visible()
+        expect(page.get_by_text("Duplicate claim tcp.port.8080")).to_be_visible()
+        expect(page.get_by_text("app.node-red-flows requires edge-os 2026.06")).to_be_visible()
+        page.screenshot(path=str(screenshot_path(request, "components-conflicts")))
+    finally:
+        marker.unlink(missing_ok=True)
 
 
 def test_uploads_system_update_through_browser_and_fake_rugix_ctrl(
@@ -86,7 +110,7 @@ def test_uploads_system_update_through_browser_and_fake_rugix_ctrl(
     commands = read_jsonl(admin_server.fake_dir / "commands.jsonl")
     assert any(command["args"] == upload["args"] for command in commands)
 
-    page.screenshot(path=str(screenshot_path(request, "system-upload")), full_page=True)
+    page.screenshot(path=str(screenshot_path(request, "system-upload")))
 
 
 def test_installs_system_update_from_url_through_browser_and_fake_rugix_ctrl(
@@ -142,7 +166,7 @@ def test_failed_app_upload_returns_job_instead_of_network_error(
     (admin_server.fake_dir / "early-exit-next-upload").write_text("1")
 
     page.goto(admin_server.frontend_url)
-    page.get_by_role("button", name="Apps").click()
+    switch_tab(page, "Apps")
     expect(page.get_by_text("Install App Bundle")).to_be_visible()
     page.locator('input[type="file"]').set_input_files(str(bundle_path))
     expect(page.get_by_text("app.rugixb")).to_be_visible()
@@ -154,7 +178,7 @@ def test_failed_app_upload_returns_job_instead_of_network_error(
 
     page.get_by_role("button", name="Install").click()
 
-    expect(page.get_by_text("Install app bundle")).to_be_visible()
+    expect(page.get_by_text("Install app bundle", exact=True)).to_be_visible()
     expect(page.get_by_text("failed").first).to_be_visible(timeout=15_000)
     page.wait_for_timeout(250)
     expect(page.get_by_text("upload failed")).not_to_be_visible()
@@ -174,4 +198,4 @@ def test_failed_app_upload_returns_job_instead_of_network_error(
         "-",
     ]
 
-    page.screenshot(path=str(screenshot_path(request, "app-upload-failed")), full_page=True)
+    page.screenshot(path=str(screenshot_path(request, "app-upload-failed")))
